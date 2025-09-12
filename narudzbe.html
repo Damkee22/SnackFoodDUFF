@@ -45,7 +45,7 @@
           <div class="card-body text-center">
             <h5 class="card-title">DUFF Burger Specijal</h5>
             <p class="card-text">Opis proizvoda 1.</p>
-            <button class="btn btn-primary" onclick="dodajUKorpu('Proizvod 1')">Dodaj u korpu</button>
+            <button class="btn btn-primary" onclick="otvoriModal('DUFF Burger Specijal')">Dodaj u korpu</button>
           </div>
         </div>
       </div>
@@ -56,7 +56,7 @@
           <div class="card-body text-center">
             <h5 class="card-title">DUFF Burger</h5>
             <p class="card-text">Opis proizvoda 2.</p>
-            <button class="btn btn-primary" onclick="dodajUKorpu('Proizvod 2')">Dodaj u korpu</button>
+            <button class="btn btn-primary" onclick="otvoriModal('DUFF Burger')">Dodaj u korpu</button>
           </div>
         </div>
       </div>
@@ -67,7 +67,7 @@
           <div class="card-body text-center">
             <h5 class="card-title">DUFF Burger With Egg</h5>
             <p class="card-text">Opis proizvoda 3.</p>
-            <button class="btn btn-primary" onclick="dodajUKorpu('Proizvod 3')">Dodaj u korpu</button>
+            <button class="btn btn-primary" onclick="otvoriModal('DUFF Burger With Egg')">Dodaj u korpu</button>
           </div>
         </div>
       </div>
@@ -77,7 +77,7 @@
     <div class="cart-box">
       <h3>Moja korpa</h3>
       <ul id="korpa" class="list-group mb-3"></ul>
-      <button class="btn btn-success w-100" onclick="posaljiNarudzbu()">📩 Pošalji narudžbu na WhatsApp</button>
+      <button class="btn btn-success w-100" onclick="otvoriModalPodaci()">📩 Pošalji narudžbu na WhatsApp</button>
     </div>
   </div>
 
@@ -85,12 +85,73 @@
     <p>© 2025 Brkic Damir | Sva prava zadržana</p>
   </footer>
 
+  <!-- MODAL ZA DODAVANJE U KORPU -->
+  <div class="modal fade" id="modalKorpa" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalProizvodNaziv"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="kolicina" class="form-label">Količina</label>
+            <input type="number" class="form-control" id="kolicina" value="1" min="1">
+          </div>
+          <div class="mb-3">
+            <label for="opis" class="form-label">Opis (opciono)</label>
+            <input type="text" class="form-control" id="opis" placeholder="npr. bez luka, extra sir">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Otkaži</button>
+          <button class="btn btn-primary" onclick="dodajUKorpu()">Dodaj</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ZA PODATKE O NARUDŽBI -->
+  <div class="modal fade" id="modalPodaci" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Podaci za dostavu</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="text" id="ime" class="form-control mb-2" placeholder="Ime i prezime">
+          <input type="text" id="adresa" class="form-control mb-2" placeholder="Ulica i broj">
+          <input type="text" id="telefon" class="form-control mb-2" placeholder="Broj telefona">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Otkaži</button>
+          <button class="btn btn-success" onclick="posaljiNarudzbu()">Pošalji</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     let korpa = [];
+    let trenutniProizvod = "";
 
-    function dodajUKorpu(proizvod) {
-      korpa.push(proizvod);
+    function otvoriModal(proizvod) {
+      trenutniProizvod = proizvod;
+      document.getElementById("modalProizvodNaziv").innerText = proizvod;
+      document.getElementById("kolicina").value = 1;
+      document.getElementById("opis").value = "";
+      let modal = new bootstrap.Modal(document.getElementById('modalKorpa'));
+      modal.show();
+    }
+
+    function dodajUKorpu() {
+      let kolicina = document.getElementById("kolicina").value;
+      let opis = document.getElementById("opis").value;
+      korpa.push({ naziv: trenutniProizvod, kolicina, opis });
       prikaziKorpu();
+      bootstrap.Modal.getInstance(document.getElementById('modalKorpa')).hide();
     }
 
     function prikaziKorpu() {
@@ -99,7 +160,8 @@
       korpa.forEach((p, index) => {
         let item = document.createElement("li");
         item.className = "list-group-item d-flex justify-content-between align-items-center";
-        item.innerHTML = `${p} <button class="btn btn-sm btn-danger" onclick="izbrisi(${index})">❌</button>`;
+        item.innerHTML = `${p.kolicina} x ${p.naziv} ${p.opis ? `(${p.opis})` : ""} 
+          <button class="btn btn-sm btn-danger" onclick="izbrisi(${index})">❌</button>`;
         lista.appendChild(item);
       });
     }
@@ -109,19 +171,36 @@
       prikaziKorpu();
     }
 
-    function posaljiNarudzbu() {
+    function otvoriModalPodaci() {
       if (korpa.length === 0) {
         alert("Korpa je prazna!");
         return;
       }
-      let poruka = "Narudžba: %0A";
+      let modal = new bootstrap.Modal(document.getElementById('modalPodaci'));
+      modal.show();
+    }
+
+    function posaljiNarudzbu() {
+      let ime = document.getElementById("ime").value.trim();
+      let adresa = document.getElementById("adresa").value.trim();
+      let telefon = document.getElementById("telefon").value.trim();
+
+      if (!ime || !adresa || !telefon) {
+        alert("Molimo popunite sva polja!");
+        return;
+      }
+
+      let poruka = "Narudžba:%0A";
       korpa.forEach(p => {
-        poruka += "- " + p + "%0A";
+        poruka += `- ${p.kolicina} x ${p.naziv} ${p.opis ? `(${p.opis})` : ""}%0A`;
       });
-      // OVDE upiši svoj broj (format: 3876xxxxxxx)
-      let broj = "38761122333"; 
+      poruka += `%0AIme: ${ime}%0AAdresa: ${adresa}%0ATelefon: ${telefon}`;
+
+      let broj = "38766315037";
       let link = `https://wa.me/${broj}?text=${poruka}`;
       window.open(link, "_blank");
+
+      bootstrap.Modal.getInstance(document.getElementById('modalPodaci')).hide();
     }
   </script>
 </body>
